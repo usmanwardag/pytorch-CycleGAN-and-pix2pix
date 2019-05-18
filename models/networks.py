@@ -206,6 +206,35 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
 ##############################################################################
 # Classes
 ##############################################################################
+
+class DTWLoss(nn.Module):
+    def __init__(self):
+        super(DTWLoss, self).__init__()
+        self.loss = nn.MSELoss()
+
+    def forward(self, x, y):
+        
+        x = x.reshape(1,-1)
+        y = y.reshape(1,-1)
+
+        mask_x = x.le(0.1)
+        mask_y = y.le(0.1)
+        x_masked = torch.masked_select(x, mask_x)
+        y_masked = torch.masked_select(y, mask_y)
+
+        len_x = len(x_masked)
+        len_y = len(y_masked)
+
+        if len_x < len_y:
+            pad = torch.nn.ConstantPad1d((0,len_y-len_x), 0)
+            x_masked = pad(x_masked)
+        else:
+            pad = torch.nn.ConstantPad1d((0,len_x-len_y), 0)
+            y_masked = pad(y_masked)
+
+        loss = self.loss(x_masked, y_masked)
+        return loss
+
 class GANLoss(nn.Module):
     """Define different GAN objectives.
 
