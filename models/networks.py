@@ -207,6 +207,21 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
 # Classes
 ##############################################################################
 
+class LenCompLoss(nn.Module):
+    def __init__(self):
+        super(LenCompLoss, self).__init__()
+
+    def forward(self, x, y):
+        mask_x = x.le(0.5)
+        mask_y = y.le(0.5)
+
+        len_x = len(torch.masked_select(x, mask_x))
+        len_y = len(torch.masked_select(y, mask_y))
+
+        #print('Len_x: {}, Len_y: {}'.format(len_x, len_y))
+        loss = torch.tensor(abs(len_y - len_x) / max(len_x, len_y))
+        return loss
+
 class DTWLoss(nn.Module):
     def __init__(self):
         super(DTWLoss, self).__init__()

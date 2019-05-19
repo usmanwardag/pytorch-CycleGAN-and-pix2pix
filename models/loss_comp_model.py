@@ -1,5 +1,5 @@
 import torch
-from fastdtw import fastdtw
+#from fastdtw import fastdtw
 from torchvision.utils import save_image
 from .base_model import BaseModel
 from . import networks
@@ -47,9 +47,9 @@ class LossCompModel(BaseModel):
         """
         BaseModel.__init__(self, opt)
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
-        self.loss_names = ['G_Comp']
+        self.loss_names = ['G_L1']
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
-        self.visual_names = ['Comparison']
+        self.visual_names = ['real_A', 'fake_B', 'real_B']
         # specify the models you want to save to the disk. The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>
         if self.isTrain:
             self.model_names = ['G']
@@ -61,8 +61,8 @@ class LossCompModel(BaseModel):
 
         if self.isTrain:
             # define loss functions
-            self.criterionLoss = networks.DTWLoss().to(self.device)
-            #self.criterionL1 = torch.nn.L1Loss()
+            #self.criterionLoss = networks.DTWLoss().to(self.device)
+            self.criterionL1 = torch.nn.L1Loss(reduction='sum')
             # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
             self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)
@@ -95,13 +95,13 @@ class LossCompModel(BaseModel):
         loss, _ = fastdtw(dense_real, dense_fake)
 
     def backward_G(self):
-        """Calculate GAN and L1 loss for the generator"""
-        # First, G(A) should fake the discriminator
-        #real = self.real_B.clone()
-        #fake = self.fake_B.clone()
-        self.loss_G_Comp = self.criterionLoss.forward(self.real_B, self.fake_B)
+        """Calculate Comparison and L1 loss for the generator"""
 
-        self.loss_G = self.loss_G_Comp 
+        self.loss_G_L1 = self.criterionL1(self.real_B, self.fake_B) #* self.opt.lambda_L1
+        #self.loss_G_Comp = self.criterionLoss.forward(self.real_B, self.fake_B) * self.opt.lambda_L1
+
+        #self.loss_G = self.loss_G_Comp + self.loss_G_L1 
+        self.loss_G = self.loss_G_L1
         self.loss_G.backward()
 
     def optimize_parameters(self):
