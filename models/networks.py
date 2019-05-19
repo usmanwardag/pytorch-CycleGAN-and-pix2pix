@@ -213,27 +213,28 @@ class LenCompLoss(nn.Module):
         self.loss = nn.L1Loss()
 
     def forward(self, x, y):
-        mask_x = x.le(0.5)
-        mask_y = y.le(0.5)
+        #mask_x = x.le(0.5)
+        #mask_y = y.le(0.5)
 
-        masked_x = torch.masked_select(x, mask_x)
-        masked_y = torch.masked_select(y, mask_y)
+        #masked_x = torch.masked_select(x, mask_x)
+        #masked_y = torch.masked_select(y, mask_y)
 
-        masked_x[:] = 1
-        masked_y[:] = 1
+        #masked_x[:] = 1
+        #masked_y[:] = 1
 
-        len_x = len(masked_x)
-        len_y = len(masked_y)
+        #len_x = len(masked_x)
+        #len_y = len(masked_y)
 
-        if len_x < len_y:
-            pad = torch.nn.ConstantPad1d((0,len_y-len_x), 0)
-            masked_x = pad(masked_x)
-        else:
-            pad = torch.nn.ConstantPad1d((0,len_x-len_y), 0)
-            masked_y = pad(masked_y)
+        #if len_x < len_y:
+        #    pad = torch.nn.ConstantPad1d((0,len_y-len_x), 0)
+        #    masked_x = pad(masked_x)
+        #else:
+        #    pad = torch.nn.ConstantPad1d((0,len_x-len_y), 0)
+        #    masked_y = pad(masked_y)
 
-        loss = self.loss(masked_x, masked_y) 
-
+        #loss = self.loss(masked_x, masked_y) 
+        
+        loss = self.loss(torch.sum(x), torch.sum(y)) 
         return loss
 
 class DTWLoss(nn.Module):
