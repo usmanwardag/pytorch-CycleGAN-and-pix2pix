@@ -210,16 +210,30 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
 class LenCompLoss(nn.Module):
     def __init__(self):
         super(LenCompLoss, self).__init__()
+        self.loss = nn.L1Loss()
 
     def forward(self, x, y):
         mask_x = x.le(0.5)
         mask_y = y.le(0.5)
 
-        len_x = len(torch.masked_select(x, mask_x))
-        len_y = len(torch.masked_select(y, mask_y))
+        masked_x = torch.masked_select(x, mask_x)
+        masked_y = torch.masked_select(y, mask_y)
 
-        #print('Len_x: {}, Len_y: {}'.format(len_x, len_y))
-        loss = torch.tensor(abs(len_y - len_x) / max(len_x, len_y))
+        masked_x[:] = 1
+        masked_y[:] = 1
+
+        len_x = len(masked_x)
+        len_y = len(masked_y)
+
+        if len_x < len_y:
+            pad = torch.nn.ConstantPad1d((0,len_y-len_x), 0)
+            masked_x = pad(masked_x)
+        else:
+            pad = torch.nn.ConstantPad1d((0,len_x-len_y), 0)
+            masked_y = pad(masked_y)
+
+        loss = self.loss(masked_x, masked_y) 
+
         return loss
 
 class DTWLoss(nn.Module):
